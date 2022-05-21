@@ -1,0 +1,116 @@
+This exercise will help you understand how to perform DNS enumeration and find misconfiguration flaws using various tools.
+
+Lab Environment
+In this lab environment, the user will access a Kali GUI instance.
+
+The target server, as described below, is running a DNS server. DNS zone transfer is enabled on the server.
+
+DNS Server
+witrap.com
+
+Your Kali has an interface with IP address 192.X.Y.Z. Run "IP addr" to know the values of X and Y.
+
+Do not attack the gateway located at IP address 192.X.Y.1
+
+Note: Please make sure to specify the target DNS server (192.X.Y.3) while making the DNS queries/requests. This server is NOT configured in the attacker machine. Hence, we need to specify it explicitly.
+
+Objective: Enumerate the DNS server and answer the five given questions.
+
+
+Tools
+The best tools for this lab are:
+
+Nmap
+dig
+nslookup
+Please go ahead ONLY if you have COMPLETED the lab or you are stuck! Checking the solutions before actually trying the concepts and techniques you studied in the course will dramatically reduce the benefits of a hands-on lab!
+
+
+Answers:
+
+I started by doing an nmap scan of 192.156.207.3. This IP was given to us so there was no need to scan entire subnets.
+
+Starting Nmap 7.92 ( https://nmap.org ) at 2022-05-22 04:11 IST                                                                                                                                                                                             
+Nmap scan report for target-1 (192.156.207.3)                                                                                                                                                                                                               
+Host is up (0.000011s latency).                                                                                                                                                                                                                             
+Not shown: 999 closed tcp ports (reset)                                                                                                                                                                                                                     
+PORT   STATE SERVICE                                                                                                                                                                                                                                        
+53/tcp open  domain                                                                                                                                                                                                                                         
+MAC Address: 02:42:C0:9C:CF:03 (Unknown)                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                            
+Nmap done: 1 IP address (1 host up) scanned in 0.23 seconds
+
+Port tcp/53 is open, so I know that I have the correct target, and that the target is live.
+
+From a different lab I know that you can use dig to initiate a zone transfer using
+dig @<dns-server-ip> <dns-server-name> -t AXFR +nocookie
+We are given the dns-server-name of witrap.com
+
+AXFR is of course the DNS Zone Transfer Protocol
+
+dig @192.156.207.3 witrap.com -t AXFR +nocookie   
+
+
+<<>> DiG 9.17.21-1-Debian <<>> @192.156.207.3 witrap.com -t AXFR +nocookie                                                                                                                                                                                
+; (1 server found)                                                                                                                                                                                                                                          
+;; global options: +cmd                                                                                                                                                                                                                                     
+witrap.com.             86400   IN      SOA     primary.witrap.com. root.witrap.com. 2011071001 3600 1800 604800 86400                                                                                                                                      
+witrap.com.             86400   IN      CAA     0 issue "witrapselfcert.com"                                                                                                                                                                                
+witrap.com.             86400   IN      LOC     37 46 29.744 N 122 25 9.904 W 32.00m 1m 10000m 10m                                                                                                                                                          
+witrap.com.             86400   IN      A       192.156.207.4
+witrap.com.             86400   IN      NS      primary.witrap.com.
+witrap.com.             86400   IN      NS      secondary.witrap.com.
+witrap.com.             86400   IN      MX      10 mx.witrap.com.
+witrap.com.             86400   IN      MX      20 mx2.witrap.com.
+witrap.com.             86400   IN      AAAA    2001:db8::11:0:0:11
+_ldap._tcp.witrap.com.  3600    IN      SRV     10 10 389 ldap.witrap.com.
+free.witrap.com.        86400   IN      A       192.156.207.5
+ldap.witrap.com.        86400   IN      A       192.156.207.8
+mx.witrap.com.          86400   IN      A       192.156.207.6
+mx2.witrap.com.         86400   IN      A       192.156.207.7
+open.witrap.com.        86400   IN      CNAME   free.witrap.com.
+primary.witrap.com.     86400   IN      A       192.168.60.14
+reserved.witrap.com.    86400   IN      A       192.156.207.9
+secondary.witrap.com.   86400   IN      A       192.168.60.15
+th3s3cr3tflag.witrap.com. 86400 IN      A       192.168.61.35
+th3s3cr3tflag.witrap.com. 86400 IN      TXT     "Here is your secret flag: my_s3cr3t_fl4g"
+witrap.com.             86400   IN      SOA     primary.witrap.com. root.witrap.com. 2011071001 3600 1800 604800 86400
+;; Query time: 0 msec
+;; SERVER: 192.156.207.3#53(192.156.207.3) (TCP)
+;; WHEN: Sun May 22 04:12:37 IST 2022
+;; XFR size: 21 records (messages 1, bytes 584)
+
+Questions:
+
+1. How many
+A Records are present for
+witrap.com
+and its subdomains?
+
+Answer 7
+
+2. What is the machine's IP address that supports
+LDAP
+over
+TCP
+on witrap.com?
+
+Answer: 192.156.207.8
+
+3. Can you find the secret flag in the
+TXT
+record of a subdomain of witrap.com?
+
+Answer: "my_s3cr3t_fl4g"
+
+4. What is the subdomain for which only reverse DNS entry exists for witrap.com? witrap owns the IP address range: 192.168..
+
+Answer: open.witrap.com
+I'm not sure about this answer and the one below, so I will have to follow back up after the end of the lab
+
+5. How many records are present in the reverse zone for witrap.com (excluding SOA)? witrap owns the IP address range: 192.168..
+2
+witrap.com.             86400   IN      A       192.156.207.4
+witrap.com.             86400   IN      AAAA    2001:db8::11:0:0:11
+
+
